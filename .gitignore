@@ -38,6 +38,9 @@ build/
 *.swp
 *.swo
 
+# Prettier
+.prettiercache
+
 # OS
 .DS_Store
 Thumbs.db

@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Test results and reports
+test-results/
+playwright-report/
+allure-results/
+allure-report/
+
+# Build outputs
+dist/
+build/
+
+# Generated files
+*.min.js
+*.min.css

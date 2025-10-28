@@ -53,7 +53,10 @@ export class TodoMVCPage extends BasePage {
   /**
    * Verify todo text by index
    */
-  async verifyTodoTextByIndex(index: number, expectedText: string): Promise<void> {
+  async verifyTodoTextByIndex(
+    index: number,
+    expectedText: string
+  ): Promise<void> {
     await expect(this.todoItems.nth(index)).toContainText(expectedText);
   }
 
@@ -61,7 +64,9 @@ export class TodoMVCPage extends BasePage {
    * Click toggle checkbox for todo by index
    */
   async toggleTodoByIndex(index: number): Promise<void> {
-    const toggle = this.todoItems.nth(index).locator(TODO_CONSTANTS.SELECTORS.TODO_TOGGLE);
+    const toggle = this.todoItems
+      .nth(index)
+      .locator(TODO_CONSTANTS.SELECTORS.TODO_TOGGLE);
     await toggle.click();
   }
 
@@ -69,7 +74,9 @@ export class TodoMVCPage extends BasePage {
    * Verify todo has completed class
    */
   async verifyTodoCompletedByIndex(index: number): Promise<void> {
-    await expect(this.todoItems.nth(index)).toHaveClass(TODO_CONSTANTS.CLASSES.COMPLETED);
+    await expect(this.todoItems.nth(index)).toHaveClass(
+      TODO_CONSTANTS.CLASSES.COMPLETED
+    );
   }
 
   /**
@@ -83,7 +90,9 @@ export class TodoMVCPage extends BasePage {
    * Verify visible todo count (after filtering)
    */
   async verifyVisibleTodoCount(expectedCount: number): Promise<void> {
-    const visibleItems = this.page.locator(TODO_CONSTANTS.SELECTORS.VISIBLE_TODOS);
+    const visibleItems = this.page.locator(
+      TODO_CONSTANTS.SELECTORS.VISIBLE_TODOS
+    );
     await expect(visibleItems).toHaveCount(expectedCount);
   }
 
@@ -91,7 +100,9 @@ export class TodoMVCPage extends BasePage {
    * Verify visible todo text
    */
   async verifyVisibleTodoText(expectedText: string): Promise<void> {
-    const visibleItems = this.page.locator(TODO_CONSTANTS.SELECTORS.VISIBLE_TODOS);
+    const visibleItems = this.page.locator(
+      TODO_CONSTANTS.SELECTORS.VISIBLE_TODOS
+    );
     await expect(visibleItems.first()).toContainText(expectedText);
   }
 
@@ -99,7 +110,11 @@ export class TodoMVCPage extends BasePage {
    * Verify visible todo has completed class
    */
   async verifyVisibleTodoCompleted(): Promise<void> {
-    const visibleItems = this.page.locator(TODO_CONSTANTS.SELECTORS.VISIBLE_TODOS);
-    await expect(visibleItems.first()).toHaveClass(TODO_CONSTANTS.CLASSES.COMPLETED);
+    const visibleItems = this.page.locator(
+      TODO_CONSTANTS.SELECTORS.VISIBLE_TODOS
+    );
+    await expect(visibleItems.first()).toHaveClass(
+      TODO_CONSTANTS.CLASSES.COMPLETED
+    );
   }
 }

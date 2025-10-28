@@ -16,11 +16,14 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['allure-playwright', { 
-      outputFolder: 'allure-results',
-      detail: true,
-      suiteTitle: false 
-    }]
+    [
+      'allure-playwright',
+      {
+        outputFolder: 'allure-results',
+        detail: true,
+        suiteTitle: false,
+      },
+    ],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -29,10 +32,10 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    
+
     /* Record video on failure */
     video: 'retain-on-failure',
-    
+
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
   },

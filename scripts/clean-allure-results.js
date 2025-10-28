@@ -8,14 +8,14 @@ const resultsDir = 'allure-results';
 if (fs.existsSync(resultsDir)) {
   const files = fs.readdirSync(resultsDir);
   const jsonFiles = files.filter(file => file.endsWith('.json'));
-  
+
   if (jsonFiles.length > 0) {
     console.log(`Found ${jsonFiles.length} old result files, cleaning...`);
-    
+
     jsonFiles.forEach(file => {
       fs.unlinkSync(path.join(resultsDir, file));
     });
-    
+
     console.log('✅ Cleaned old result files');
   } else {
     console.log('No old result files to clean');

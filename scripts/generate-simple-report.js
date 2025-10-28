@@ -6,54 +6,59 @@ console.log('Generating enhanced Allure HTML report...');
 try {
   // Read all JSON result files (should be clean now)
   const resultsDir = 'allure-results';
-  const files = fs.existsSync(resultsDir) ? 
-    fs.readdirSync(resultsDir).filter(file => file.endsWith('.json')) : [];
-  
+  const files = fs.existsSync(resultsDir)
+    ? fs.readdirSync(resultsDir).filter(file => file.endsWith('.json'))
+    : [];
+
   console.log(`Found ${files.length} result files`);
-  
+
   let allResults = [];
-  
+
   files.forEach(file => {
     const filePath = path.join(resultsDir, file);
     const content = fs.readFileSync(filePath, 'utf8');
     const result = JSON.parse(content);
-    
+
     // Calculate duration if not present
     if (!result.time && result.start && result.stop) {
       result.time = result.stop - result.start;
     }
-    
+
     // Ensure time is a number
     result.time = result.time || 0;
-    
+
     // Extract browser information from parameters
     let browser = 'Unknown';
     if (result.parameters) {
-      const projectParam = result.parameters.find(param => param.name === 'Project');
+      const projectParam = result.parameters.find(
+        param => param.name === 'Project'
+      );
       if (projectParam) {
         browser = projectParam.value;
       }
     }
-    
+
     // Fallback: try to extract browser from labels
     if (browser === 'Unknown' && result.labels) {
-      const parentSuiteLabel = result.labels.find(label => label.name === 'parentSuite');
+      const parentSuiteLabel = result.labels.find(
+        label => label.name === 'parentSuite'
+      );
       if (parentSuiteLabel) {
         browser = parentSuiteLabel.value;
       }
     }
-    
+
     // Fallback: try to extract browser from test name
     if (browser === 'Unknown' && result.name) {
       if (result.name.includes('chromium')) browser = 'chromium';
       else if (result.name.includes('firefox')) browser = 'firefox';
       else if (result.name.includes('webkit')) browser = 'webkit';
     }
-    
+
     result.browser = browser;
     allResults.push(result);
   });
-  
+
   // Helper function to format duration
   function formatDuration(ms) {
     if (!ms || ms === 0) return '0ms';
@@ -61,89 +66,90 @@ try {
     if (ms < 60000) return (ms / 1000).toFixed(2) + 's';
     return (ms / 60000).toFixed(2) + 'm';
   }
-  
-        // Create enhanced HTML with filters
-        const passedTests = allResults.filter(r => r.status === 'passed');
-        const failedTests = allResults.filter(r => r.status === 'failed');
-        const skippedTests = allResults.filter(r => r.status === 'skipped');
-        const totalDuration = allResults.reduce((sum, r) => sum + (r.time || 0), 0);
 
-        // Get unique browsers
-        const browsers = [...new Set(allResults.map(r => r.browser))];
+  // Create enhanced HTML with filters
+  const passedTests = allResults.filter(r => r.status === 'passed');
+  const failedTests = allResults.filter(r => r.status === 'failed');
+  const skippedTests = allResults.filter(r => r.status === 'skipped');
+  const totalDuration = allResults.reduce((sum, r) => sum + (r.time || 0), 0);
 
-        // Copy attachments first so we have the correct paths
-        const attachmentsDir = path.join('allure-report', 'attachments');
-        if (!fs.existsSync(attachmentsDir)) {
-          fs.mkdirSync(attachmentsDir, { recursive: true });
-        }
+  // Get unique browsers
+  const browsers = [...new Set(allResults.map(r => r.browser))];
 
-        const copiedFiles = new Set(); // Track copied files to avoid duplicates
+  // Copy attachments first so we have the correct paths
+  const attachmentsDir = path.join('allure-report', 'attachments');
+  if (!fs.existsSync(attachmentsDir)) {
+    fs.mkdirSync(attachmentsDir, { recursive: true });
+  }
 
-        allResults.forEach((result, testIndex) => {
-          const attachments = extractAttachments(result);
-          attachments.forEach((attachment, attachmentIndex) => {
-            const sourcePath = path.join('allure-results', attachment.source);
-            
-            if (fs.existsSync(sourcePath)) {
-              try {
-                // Create unique filename: testIndex-attachmentIndex-originalName
-                const originalName = attachment.source.split('-').pop();
-                const extension = path.extname(originalName);
-                const baseName = path.basename(originalName, extension);
-                const uniqueFileName = `${testIndex}-${attachmentIndex}-${baseName}${extension}`;
-                const destPath = path.join(attachmentsDir, uniqueFileName);
-                
-                // Only copy if not already copied
-                if (!copiedFiles.has(attachment.source)) {
-                  fs.copyFileSync(sourcePath, destPath);
-                  copiedFiles.add(attachment.source);
-                  
-                  // Update the attachment source for the HTML
-                  attachment.reportPath = `attachments/${uniqueFileName}`;
-                } else {
-                  // If already copied, find the existing path
-                  attachment.reportPath = `attachments/${uniqueFileName}`;
-                }
-              } catch (error) {
-                console.log(`Warning: Could not copy ${sourcePath}: ${error.message}`);
-              }
-            }
-          });
-        });
+  const copiedFiles = new Set(); // Track copied files to avoid duplicates
 
-        // Helper function to extract attachments from test steps
-        function extractAttachments(test) {
-          const attachments = [];
-          
-          function extractFromSteps(steps) {
-            if (!steps) return;
-            steps.forEach(step => {
-              if (step.attachments && step.attachments.length > 0) {
-                step.attachments.forEach(attachment => {
-                  attachments.push({
-                    name: attachment.name,
-                    source: attachment.source,
-                    type: attachment.type
-                  });
-                });
-              }
-              if (step.steps) {
-                extractFromSteps(step.steps);
-              }
-            });
+  allResults.forEach((result, testIndex) => {
+    const attachments = extractAttachments(result);
+    attachments.forEach((attachment, attachmentIndex) => {
+      const sourcePath = path.join('allure-results', attachment.source);
+
+      if (fs.existsSync(sourcePath)) {
+        try {
+          // Create unique filename: testIndex-attachmentIndex-originalName
+          const originalName = attachment.source.split('-').pop();
+          const extension = path.extname(originalName);
+          const baseName = path.basename(originalName, extension);
+          const uniqueFileName = `${testIndex}-${attachmentIndex}-${baseName}${extension}`;
+          const destPath = path.join(attachmentsDir, uniqueFileName);
+
+          // Only copy if not already copied
+          if (!copiedFiles.has(attachment.source)) {
+            fs.copyFileSync(sourcePath, destPath);
+            copiedFiles.add(attachment.source);
+
+            // Update the attachment source for the HTML
+            attachment.reportPath = `attachments/${uniqueFileName}`;
+          } else {
+            // If already copied, find the existing path
+            attachment.reportPath = `attachments/${uniqueFileName}`;
           }
-          
-          extractFromSteps(test.steps);
-          return attachments;
+        } catch (error) {
+          console.log(
+            `Warning: Could not copy ${sourcePath}: ${error.message}`
+          );
         }
+      }
+    });
+  });
 
-  
+  // Helper function to extract attachments from test steps
+  function extractAttachments(test) {
+    const attachments = [];
+
+    function extractFromSteps(steps) {
+      if (!steps) return;
+      steps.forEach(step => {
+        if (step.attachments && step.attachments.length > 0) {
+          step.attachments.forEach(attachment => {
+            attachments.push({
+              name: attachment.name,
+              source: attachment.source,
+              type: attachment.type,
+            });
+          });
+        }
+        if (step.steps) {
+          extractFromSteps(step.steps);
+        }
+      });
+    }
+
+    extractFromSteps(test.steps);
+    return attachments;
+  }
+
   // Group tests by browser
   const testsByBrowser = browsers.reduce((acc, browser) => {
     acc[browser] = allResults.filter(r => r.browser === browser);
     return acc;
   }, {});
-  
+
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -581,23 +587,32 @@ try {
                     <input type="checkbox" id="browser-all" checked onchange="toggleBrowser('all')">
                     <label for="browser-all">🌐 All Browsers</label>
                 </div>
-                ${browsers.map(browser => {
-                  const icon = browser === 'chromium' ? '🟢' : 
-                              browser === 'firefox' ? '🦊' : 
-                              browser === 'webkit' ? '🟦' : '🌐';
-                  return `
+                ${browsers
+                  .map(browser => {
+                    const icon =
+                      browser === 'chromium'
+                        ? '🟢'
+                        : browser === 'firefox'
+                          ? '🦊'
+                          : browser === 'webkit'
+                            ? '🟦'
+                            : '🌐';
+                    return `
                     <div class="checkbox-container checked" onclick="toggleBrowser('${browser}')">
                         <input type="checkbox" id="browser-${browser}" checked onchange="toggleBrowser('${browser}')">
                         <label for="browser-${browser}">${icon} ${browser}</label>
                     </div>
                   `;
-                }).join('')}
+                  })
+                  .join('')}
             </div>
         </div>
         
         <h2>📋 Test Details</h2>
         <div id="test-results">
-            ${allResults.map(result => `
+            ${allResults
+              .map(
+                result => `
                 <div class="test-case" data-status="${result.status}" data-browser="${result.browser}">
                     <div class="test-header">
                         <h3 class="test-title">${result.name} <span class="browser-badge">[${result.browser}]</span></h3>
@@ -608,26 +623,41 @@ try {
                         <span><strong>Executed:</strong> <span class="timestamp">${new Date(result.start).toLocaleString()}</span></span>
                         <span><strong>Browser:</strong> <span class="browser-name">${result.browser}</span></span>
                     </div>
-                    ${result.steps && result.steps.length > 0 ? `
+                    ${
+                      result.steps && result.steps.length > 0
+                        ? `
                         <div class="steps">
                             <h4>📝 Test Steps:</h4>
-                            ${result.steps.map(step => `
+                            ${result.steps
+                              .map(
+                                step => `
                                 <div class="step">
                                     <div class="step-name">${step.name}</div>
                                     ${step.status ? `<div class="step-status">Status: ${step.status}</div>` : ''}
                                 </div>
-                            `).join('')}
+                            `
+                              )
+                              .join('')}
                         </div>
-                    ` : ''}
+                    `
+                        : ''
+                    }
                     ${(() => {
-                        const attachments = extractAttachments(result);
-                        return attachments.length > 0 ? `
+                      const attachments = extractAttachments(result);
+                      return attachments.length > 0
+                        ? `
                             <div class="attachments">
                                 <h4>📎 Attachments (Videos & Screenshots):</h4>
-                                ${attachments.map((attachment, index) => {
-                                    const fileName = attachment.source.split('-').pop();
-                                    const displayName = attachment.name || fileName;
-                                    const reportPath = attachment.reportPath || `attachments/${allResults.indexOf(result)}-${index}-${fileName}`;
+                                ${attachments
+                                  .map((attachment, index) => {
+                                    const fileName = attachment.source
+                                      .split('-')
+                                      .pop();
+                                    const displayName =
+                                      attachment.name || fileName;
+                                    const reportPath =
+                                      attachment.reportPath ||
+                                      `attachments/${allResults.indexOf(result)}-${index}-${fileName}`;
                                     return `
                                     <div class="attachment-item">
                                         <a href="${reportPath}" class="attachment-link" target="_blank">
@@ -636,12 +666,16 @@ try {
                                         <small style="color: #6c757d; margin-left: 10px;">${attachment.type}</small>
                                     </div>
                                 `;
-                                }).join('')}
+                                  })
+                                  .join('')}
                             </div>
-                        ` : '';
+                        `
+                        : '';
                     })()}
                 </div>
-            `).join('')}
+            `
+              )
+              .join('')}
         </div>
     </div>
     
@@ -670,22 +704,30 @@ try {
                     selectedBrowsers.clear();
                     selectedBrowsers.add('all');
                     // Uncheck all individual browsers
-                    ${browsers.map(b => `
+                    ${browsers
+                      .map(
+                        b => `
                         const ${b}Checkbox = document.getElementById('browser-${b}');
                         const ${b}Container = ${b}Checkbox.closest('.checkbox-container');
                         ${b}Checkbox.checked = false;
                         ${b}Container.classList.remove('checked');
-                    `).join('')}
+                    `
+                      )
+                      .join('')}
                 } else {
                     // Check all individual browsers
                     selectedBrowsers.clear();
-                    ${browsers.map(b => `
+                    ${browsers
+                      .map(
+                        b => `
                         selectedBrowsers.add('${b}');
                         const ${b}Checkbox = document.getElementById('browser-${b}');
                         const ${b}Container = ${b}Checkbox.closest('.checkbox-container');
                         ${b}Checkbox.checked = true;
                         ${b}Container.classList.add('checked');
-                    `).join('')}
+                    `
+                      )
+                      .join('')}
                 }
             } else {
                 // Toggle individual browser
@@ -746,19 +788,18 @@ try {
     </script>
 </body>
 </html>`;
-  
-        // Create report directory if it doesn't exist
-        if (!fs.existsSync('allure-report')) {
-          fs.mkdirSync('allure-report');
-        }
 
-        // Write HTML file
-        fs.writeFileSync('allure-report/index.html', html);
-  
+  // Create report directory if it doesn't exist
+  if (!fs.existsSync('allure-report')) {
+    fs.mkdirSync('allure-report');
+  }
+
+  // Write HTML file
+  fs.writeFileSync('allure-report/index.html', html);
+
   console.log('✅ Allure HTML report generated successfully!');
   console.log('📁 Location: allure-report/index.html');
   console.log('🌐 To open: npm run allure:open');
-  
 } catch (error) {
   console.error('❌ Error generating report:', error.message);
   process.exit(1);
