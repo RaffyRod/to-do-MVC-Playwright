@@ -4,9 +4,12 @@ const path = require('path');
 console.log('Generating enhanced Allure HTML report...');
 
 try {
-  // Read all JSON result files
+  // Read all JSON result files (should be clean now)
   const resultsDir = 'allure-results';
-  const files = fs.readdirSync(resultsDir).filter(file => file.endsWith('.json'));
+  const files = fs.existsSync(resultsDir) ? 
+    fs.readdirSync(resultsDir).filter(file => file.endsWith('.json')) : [];
+  
+  console.log(`Found ${files.length} result files`);
   
   let allResults = [];
   
