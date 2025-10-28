@@ -3,7 +3,7 @@ import { BasePage } from './base.page';
 import { TODO_CONSTANTS } from '../utils/constants';
 
 export class TodoMVCPage extends BasePage {
-  // Locators del test original
+  // Locators from original test
   private get newTodoInput(): Locator {
     return this.page.locator(TODO_CONSTANTS.SELECTORS.NEW_TODO_INPUT);
   }

@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('Generando reporte HTML básico de Allure...');
+console.log('Generating basic Allure HTML report...');
 
 try {
-  // Leer todos los archivos JSON de resultados
+  // Read all JSON result files
   const resultsDir = 'allure-results';
   const files = fs.readdirSync(resultsDir).filter(file => file.endsWith('.json'));
   
@@ -17,10 +17,10 @@ try {
     allResults.push(result);
   });
   
-  // Crear HTML básico
+  // Create basic HTML
   const html = `
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,7 +47,7 @@ try {
     <div class="container">
         <div class="header">
             <h1>🚀 Allure Report - TodoMVC Tests</h1>
-            <p>Reporte generado el ${new Date().toLocaleString()}</p>
+            <p>Report generated on ${new Date().toLocaleString()}</p>
         </div>
         
         <div class="summary">
@@ -85,19 +85,19 @@ try {
 </body>
 </html>`;
   
-  // Crear directorio de reporte si no existe
+  // Create report directory if it doesn't exist
   if (!fs.existsSync('allure-report')) {
     fs.mkdirSync('allure-report');
   }
   
-  // Escribir archivo HTML
+  // Write HTML file
   fs.writeFileSync('allure-report/index.html', html);
   
-  console.log('✅ Reporte HTML generado exitosamente!');
-  console.log('📁 Ubicación: allure-report/index.html');
-  console.log('🌐 Para abrir: npm run allure:open');
+  console.log('✅ Allure HTML report generated successfully!');
+  console.log('📁 Location: allure-report/index.html');
+  console.log('🌐 To open: npm run allure:open');
   
 } catch (error) {
-  console.error('❌ Error al generar el reporte:', error.message);
+  console.error('❌ Error generating report:', error.message);
   process.exit(1);
 }
