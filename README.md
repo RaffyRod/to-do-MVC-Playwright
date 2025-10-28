@@ -219,7 +219,7 @@ await allure.owner('QA Team');
 
 ## 📊 Reports
 
-### Allure Report (Default)
+### Allure Report (Default) ✅
 
 - ✅ **Detailed steps**: Each test action documented
 - ✅ **Metrics**: Execution time, status, duration
