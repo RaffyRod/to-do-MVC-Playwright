@@ -23,20 +23,28 @@ try {
     // Ensure time is a number
     result.time = result.time || 0;
     
-    // Extract browser information from test name or labels
+    // Extract browser information from parameters
     let browser = 'Unknown';
-    if (result.labels) {
-      const browserLabel = result.labels.find(label => label.name === 'browser');
-      if (browserLabel) {
-        browser = browserLabel.value;
+    if (result.parameters) {
+      const projectParam = result.parameters.find(param => param.name === 'Project');
+      if (projectParam) {
+        browser = projectParam.value;
+      }
+    }
+    
+    // Fallback: try to extract browser from labels
+    if (browser === 'Unknown' && result.labels) {
+      const parentSuiteLabel = result.labels.find(label => label.name === 'parentSuite');
+      if (parentSuiteLabel) {
+        browser = parentSuiteLabel.value;
       }
     }
     
     // Fallback: try to extract browser from test name
     if (browser === 'Unknown' && result.name) {
-      if (result.name.includes('chromium')) browser = 'Chromium';
-      else if (result.name.includes('firefox')) browser = 'Firefox';
-      else if (result.name.includes('webkit')) browser = 'WebKit';
+      if (result.name.includes('chromium')) browser = 'chromium';
+      else if (result.name.includes('firefox')) browser = 'firefox';
+      else if (result.name.includes('webkit')) browser = 'webkit';
     }
     
     result.browser = browser;
@@ -171,8 +179,61 @@ try {
         }
         .filter-btn.passed { background: #28a745; }
         .filter-btn.failed { background: #dc3545; }
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: #6c757d;
+            color: white;
+        }
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .filter-btn.active {
+            background: #007bff;
+        }
+        .filter-btn.passed { background: #28a745; }
+        .filter-btn.failed { background: #dc3545; }
         .filter-btn.skipped { background: #ffc107; color: #000; }
         .filter-btn.browser { background: #17a2b8; }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+        .checkbox-container:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+        }
+        .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .checkbox-container label {
+            cursor: pointer;
+            font-weight: 500;
+            color: #495057;
+            margin: 0;
+        }
+        .checkbox-container.checked {
+            background: #e3f2fd;
+            border-color: #007bff;
+        }
+        .checkbox-container.checked label {
+            color: #007bff;
+            font-weight: 600;
+        }
         .browser-badge {
             background: #6c757d;
             color: white;
@@ -314,10 +375,16 @@ try {
                 <button class="filter-btn skipped" onclick="filterTests('skipped', 'all')">Skipped Only</button>
             </div>
             <h4>🌐 Filter by Browser</h4>
-            <div class="filter-buttons">
-                <button class="filter-btn browser" onclick="filterByBrowser('all')">All Browsers</button>
+            <div class="browser-filters">
+                <div class="checkbox-container checked" onclick="toggleBrowser('all')">
+                    <input type="checkbox" id="browser-all" checked onchange="toggleBrowser('all')">
+                    <label for="browser-all">All Browsers</label>
+                </div>
                 ${browsers.map(browser => `
-                    <button class="filter-btn browser" onclick="filterByBrowser('${browser}')">${browser}</button>
+                    <div class="checkbox-container checked" onclick="toggleBrowser('${browser}')">
+                        <input type="checkbox" id="browser-${browser}" checked onchange="toggleBrowser('${browser}')">
+                        <label for="browser-${browser}">${browser}</label>
+                    </div>
                 `).join('')}
             </div>
         </div>
@@ -353,11 +420,10 @@ try {
     
     <script>
         let currentStatusFilter = 'all';
-        let currentBrowserFilter = 'all';
+        let selectedBrowsers = new Set(['all']);
         
         function filterTests(status, browser) {
             currentStatusFilter = status;
-            currentBrowserFilter = browser;
             
             // Update button states
             const statusButtons = document.querySelectorAll('.filter-btn:not(.browser)');
@@ -367,13 +433,62 @@ try {
             applyFilters();
         }
         
-        function filterByBrowser(browser) {
-            currentBrowserFilter = browser;
+        function toggleBrowser(browser) {
+            const checkbox = document.getElementById(\`browser-\${browser}\`);
+            const container = checkbox.closest('.checkbox-container');
             
-            // Update browser button states
-            const browserButtons = document.querySelectorAll('.filter-btn.browser');
-            browserButtons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (browser === 'all') {
+                // Toggle all browsers
+                if (checkbox.checked) {
+                    selectedBrowsers.clear();
+                    selectedBrowsers.add('all');
+                    // Uncheck all individual browsers
+                    ${browsers.map(b => `
+                        const ${b}Checkbox = document.getElementById('browser-${b}');
+                        const ${b}Container = ${b}Checkbox.closest('.checkbox-container');
+                        ${b}Checkbox.checked = false;
+                        ${b}Container.classList.remove('checked');
+                    `).join('')}
+                } else {
+                    // Check all individual browsers
+                    selectedBrowsers.clear();
+                    ${browsers.map(b => `
+                        selectedBrowsers.add('${b}');
+                        const ${b}Checkbox = document.getElementById('browser-${b}');
+                        const ${b}Container = ${b}Checkbox.closest('.checkbox-container');
+                        ${b}Checkbox.checked = true;
+                        ${b}Container.classList.add('checked');
+                    `).join('')}
+                }
+            } else {
+                // Toggle individual browser
+                if (checkbox.checked) {
+                    selectedBrowsers.add(browser);
+                    selectedBrowsers.delete('all');
+                    // Uncheck "All Browsers"
+                    const allCheckbox = document.getElementById('browser-all');
+                    const allContainer = allCheckbox.closest('.checkbox-container');
+                    allCheckbox.checked = false;
+                    allContainer.classList.remove('checked');
+                } else {
+                    selectedBrowsers.delete(browser);
+                    // If no browsers selected, select all
+                    if (selectedBrowsers.size === 0) {
+                        selectedBrowsers.add('all');
+                        const allCheckbox = document.getElementById('browser-all');
+                        const allContainer = allCheckbox.closest('.checkbox-container');
+                        allCheckbox.checked = true;
+                        allContainer.classList.add('checked');
+                    }
+                }
+            }
+            
+            // Update container visual state
+            if (checkbox.checked) {
+                container.classList.add('checked');
+            } else {
+                container.classList.remove('checked');
+            }
             
             applyFilters();
         }
@@ -385,7 +500,7 @@ try {
                 const testBrowser = test.dataset.browser;
                 
                 const statusMatch = currentStatusFilter === 'all' || testStatus === currentStatusFilter;
-                const browserMatch = currentBrowserFilter === 'all' || testBrowser === currentBrowserFilter;
+                const browserMatch = selectedBrowsers.has('all') || selectedBrowsers.has(testBrowser);
                 
                 if (statusMatch && browserMatch) {
                     test.classList.remove('hidden');
