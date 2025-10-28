@@ -1,0 +1,28 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test && node generate-simple-report.js",
+    "test:html": "playwright test --reporter=html",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:report": "start allure-report/index.html",
+    "test:allure": "playwright test && node generate-simple-report.js && start allure-report/index.html",
+    "allure:generate": "node generate-simple-report.js",
+    "allure:open": "node generate-simple-report.js && start allure-report/index.html",
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.9.1",
+    "allure-commandline": "^2.34.1",
+    "allure-playwright": "^3.4.2",
+    "typescript": "^5.9.3"
+  }
+}
