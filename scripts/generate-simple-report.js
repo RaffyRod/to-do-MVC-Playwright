@@ -76,13 +76,14 @@ try {
   // Get unique browsers
   const browsers = [...new Set(allResults.map(r => r.browser))];
 
-  // Copy attachments first so we have the correct paths
+  // Clean and recreate attachments directory to avoid duplicates
   const attachmentsDir = path.join('allure-report', 'attachments');
-  if (!fs.existsSync(attachmentsDir)) {
-    fs.mkdirSync(attachmentsDir, { recursive: true });
+  if (fs.existsSync(attachmentsDir)) {
+    fs.rmSync(attachmentsDir, { recursive: true, force: true });
   }
+  fs.mkdirSync(attachmentsDir, { recursive: true });
 
-  const copiedFiles = new Set(); // Track copied files to avoid duplicates
+  const copiedFiles = new Map(); // Track copied files with their new names
 
   allResults.forEach((result, testIndex) => {
     const attachments = extractAttachments(result);
@@ -101,14 +102,12 @@ try {
           // Only copy if not already copied
           if (!copiedFiles.has(attachment.source)) {
             fs.copyFileSync(sourcePath, destPath);
-            copiedFiles.add(attachment.source);
-
-            // Update the attachment source for the HTML
-            attachment.reportPath = `attachments/${uniqueFileName}`;
-          } else {
-            // If already copied, find the existing path
-            attachment.reportPath = `attachments/${uniqueFileName}`;
+            copiedFiles.set(attachment.source, uniqueFileName);
+            console.log(`Copied attachment: ${uniqueFileName}`);
           }
+
+          // Update the attachment source for the HTML
+          attachment.reportPath = `attachments/${copiedFiles.get(attachment.source)}`;
         } catch (error) {
           console.log(
             `Warning: Could not copy ${sourcePath}: ${error.message}`
