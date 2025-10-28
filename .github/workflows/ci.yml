@@ -59,6 +59,14 @@ jobs:
           path: test-results/
           retention-days: 30
 
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: github-pages
+          path: ./allure-report
+          retention-days: 30
+
       - name: Setup Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && always()
         uses: actions/configure-pages@v4
@@ -67,7 +75,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && always()
         uses: actions/deploy-pages@v4
         with:
-          path: ./allure-report
+          artifact_name: github-pages
 
       - name: Comment PR with report link
         if: github.event_name == 'pull_request' && always()
