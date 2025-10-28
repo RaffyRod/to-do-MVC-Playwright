@@ -54,4 +54,29 @@ test.describe('TodoMVC Application Tests', () => {
       await todoPage.verifyVisibleTodoCompleted();
     });
   });
+
+  test('Failing test for demonstration', async ({ page }) => {
+    await allure.epic('TodoMVC Application');
+    await allure.feature('Todo Management');
+    await allure.story('Failing Test Demo');
+    await allure.severity('critical');
+    await allure.owner('QA Team');
+
+    await allure.step('Navigate to TodoMVC page', async () => {
+      await todoPage.navigateToTodoMVC();
+    });
+    
+    await allure.step('Verify page title', async () => {
+      await todoPage.verifyPageTitle();
+    });
+    
+    await allure.step('Create a todo item', async () => {
+      await todoPage.addTodo('This will fail');
+    });
+    
+    await allure.step('Intentionally fail the test', async () => {
+      // This will fail and generate video/screenshot
+      await expect(page.locator('.non-existent-element')).toBeVisible();
+    });
+  });
 });

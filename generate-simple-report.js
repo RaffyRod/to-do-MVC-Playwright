@@ -62,14 +62,81 @@ try {
     return (ms / 60000).toFixed(2) + 'm';
   }
   
-  // Create enhanced HTML with filters
-  const passedTests = allResults.filter(r => r.status === 'passed');
-  const failedTests = allResults.filter(r => r.status === 'failed');
-  const skippedTests = allResults.filter(r => r.status === 'skipped');
-  const totalDuration = allResults.reduce((sum, r) => sum + (r.time || 0), 0);
-  
-  // Get unique browsers
-  const browsers = [...new Set(allResults.map(r => r.browser))];
+        // Create enhanced HTML with filters
+        const passedTests = allResults.filter(r => r.status === 'passed');
+        const failedTests = allResults.filter(r => r.status === 'failed');
+        const skippedTests = allResults.filter(r => r.status === 'skipped');
+        const totalDuration = allResults.reduce((sum, r) => sum + (r.time || 0), 0);
+
+        // Get unique browsers
+        const browsers = [...new Set(allResults.map(r => r.browser))];
+
+        // Copy attachments first so we have the correct paths
+        const attachmentsDir = path.join('allure-report', 'attachments');
+        if (!fs.existsSync(attachmentsDir)) {
+          fs.mkdirSync(attachmentsDir, { recursive: true });
+        }
+
+        const copiedFiles = new Set(); // Track copied files to avoid duplicates
+
+        allResults.forEach((result, testIndex) => {
+          const attachments = extractAttachments(result);
+          attachments.forEach((attachment, attachmentIndex) => {
+            const sourcePath = path.join('allure-results', attachment.source);
+            
+            if (fs.existsSync(sourcePath)) {
+              try {
+                // Create unique filename: testIndex-attachmentIndex-originalName
+                const originalName = attachment.source.split('-').pop();
+                const extension = path.extname(originalName);
+                const baseName = path.basename(originalName, extension);
+                const uniqueFileName = `${testIndex}-${attachmentIndex}-${baseName}${extension}`;
+                const destPath = path.join(attachmentsDir, uniqueFileName);
+                
+                // Only copy if not already copied
+                if (!copiedFiles.has(attachment.source)) {
+                  fs.copyFileSync(sourcePath, destPath);
+                  copiedFiles.add(attachment.source);
+                  
+                  // Update the attachment source for the HTML
+                  attachment.reportPath = `attachments/${uniqueFileName}`;
+                } else {
+                  // If already copied, find the existing path
+                  attachment.reportPath = `attachments/${uniqueFileName}`;
+                }
+              } catch (error) {
+                console.log(`Warning: Could not copy ${sourcePath}: ${error.message}`);
+              }
+            }
+          });
+        });
+
+        // Helper function to extract attachments from test steps
+        function extractAttachments(test) {
+          const attachments = [];
+          
+          function extractFromSteps(steps) {
+            if (!steps) return;
+            steps.forEach(step => {
+              if (step.attachments && step.attachments.length > 0) {
+                step.attachments.forEach(attachment => {
+                  attachments.push({
+                    name: attachment.name,
+                    source: attachment.source,
+                    type: attachment.type
+                  });
+                });
+              }
+              if (step.steps) {
+                extractFromSteps(step.steps);
+              }
+            });
+          }
+          
+          extractFromSteps(test.steps);
+          return attachments;
+        }
+
   
   // Group tests by browser
   const testsByBrowser = browsers.reduce((acc, browser) => {
@@ -341,6 +408,99 @@ try {
         .timestamp {
             color: #6c757d;
         }
+        .browser-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .all-browsers-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border-color: #667eea !important;
+            font-weight: bold;
+        }
+        .all-browsers-container:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+        }
+        .all-browsers-container.checked {
+            background: linear-gradient(135deg, #4c63d2 0%, #5d3a7e 100%) !important;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .all-browsers-container label {
+            color: white !important;
+            font-weight: bold !important;
+        }
+        .test-case.failed {
+            border-left: 5px solid #dc3545;
+        }
+        .test-case.failed .test-header {
+            background: linear-gradient(135deg, #ffe6e6 0%, #ffcccc 100%);
+            margin: -20px -20px 15px -20px;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+        }
+        .attachments {
+            margin-top: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .attachments h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .attachment-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .attachment-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .attachment-link:hover {
+            text-decoration: underline;
+        }
+        .chart-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .chart-container h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .pie-chart {
+            display: inline-block;
+            margin: 20px 0;
+        }
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -369,6 +529,44 @@ try {
             </div>
         </div>
         
+        <div class="chart-container">
+            <h3>📊 Test Results Distribution</h3>
+            <div class="pie-chart">
+                <svg width="200" height="200" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="#e9ecef" stroke-width="40"/>
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="#28a745" stroke-width="40" 
+                            stroke-dasharray="${passedTests.length > 0 ? (passedTests.length / allResults.length) * 502.4 : 0} 502.4" 
+                            stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="#dc3545" stroke-width="40" 
+                            stroke-dasharray="${failedTests.length > 0 ? (failedTests.length / allResults.length) * 502.4 : 0} 502.4" 
+                            stroke-dashoffset="${passedTests.length > 0 ? -(passedTests.length / allResults.length) * 502.4 : 0}" 
+                            transform="rotate(-90 100 100)"/>
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="#ffc107" stroke-width="40" 
+                            stroke-dasharray="${skippedTests.length > 0 ? (skippedTests.length / allResults.length) * 502.4 : 0} 502.4" 
+                            stroke-dashoffset="${passedTests.length > 0 && failedTests.length > 0 ? -((passedTests.length + failedTests.length) / allResults.length) * 502.4 : passedTests.length > 0 ? -(passedTests.length / allResults.length) * 502.4 : failedTests.length > 0 ? -(failedTests.length / allResults.length) * 502.4 : 0}" 
+                            transform="rotate(-90 100 100)"/>
+                    <text x="100" y="100" text-anchor="middle" dy="0.3em" font-size="24" font-weight="bold" fill="#2c3e50">
+                        ${allResults.length}
+                    </text>
+                    <text x="100" y="120" text-anchor="middle" font-size="12" fill="#6c757d">Total</text>
+                </svg>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #28a745;"></div>
+                    <span>Passed (${passedTests.length}) - ${allResults.length > 0 ? ((passedTests.length / allResults.length) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #dc3545;"></div>
+                    <span>Failed (${failedTests.length}) - ${allResults.length > 0 ? ((failedTests.length / allResults.length) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffc107;"></div>
+                    <span>Skipped (${skippedTests.length}) - ${allResults.length > 0 ? ((skippedTests.length / allResults.length) * 100).toFixed(1) : 0}%</span>
+                </div>
+            </div>
+        </div>
+        
         <div class="filters">
             <h3>🔍 Filter Tests</h3>
             <div class="filter-buttons">
@@ -379,16 +577,21 @@ try {
             </div>
             <h4>🌐 Filter by Browser</h4>
             <div class="browser-filters">
-                <div class="checkbox-container checked" onclick="toggleBrowser('all')">
+                <div class="checkbox-container all-browsers-container checked" onclick="toggleBrowser('all')">
                     <input type="checkbox" id="browser-all" checked onchange="toggleBrowser('all')">
-                    <label for="browser-all">All Browsers</label>
+                    <label for="browser-all">🌐 All Browsers</label>
                 </div>
-                ${browsers.map(browser => `
+                ${browsers.map(browser => {
+                  const icon = browser === 'chromium' ? '🟢' : 
+                              browser === 'firefox' ? '🦊' : 
+                              browser === 'webkit' ? '🟦' : '🌐';
+                  return `
                     <div class="checkbox-container checked" onclick="toggleBrowser('${browser}')">
                         <input type="checkbox" id="browser-${browser}" checked onchange="toggleBrowser('${browser}')">
-                        <label for="browser-${browser}">${browser}</label>
+                        <label for="browser-${browser}">${icon} ${browser}</label>
                     </div>
-                `).join('')}
+                  `;
+                }).join('')}
             </div>
         </div>
         
@@ -416,6 +619,27 @@ try {
                             `).join('')}
                         </div>
                     ` : ''}
+                    ${(() => {
+                        const attachments = extractAttachments(result);
+                        return attachments.length > 0 ? `
+                            <div class="attachments">
+                                <h4>📎 Attachments (Videos & Screenshots):</h4>
+                                ${attachments.map((attachment, index) => {
+                                    const fileName = attachment.source.split('-').pop();
+                                    const displayName = attachment.name || fileName;
+                                    const reportPath = attachment.reportPath || `attachments/${allResults.indexOf(result)}-${index}-${fileName}`;
+                                    return `
+                                    <div class="attachment-item">
+                                        <a href="${reportPath}" class="attachment-link" target="_blank">
+                                            ${attachment.type.includes('video') ? '🎥' : attachment.type.includes('image') ? '📸' : '📄'} ${displayName}
+                                        </a>
+                                        <small style="color: #6c757d; margin-left: 10px;">${attachment.type}</small>
+                                    </div>
+                                `;
+                                }).join('')}
+                            </div>
+                        ` : '';
+                    })()}
                 </div>
             `).join('')}
         </div>
@@ -523,13 +747,13 @@ try {
 </body>
 </html>`;
   
-  // Create report directory if it doesn't exist
-  if (!fs.existsSync('allure-report')) {
-    fs.mkdirSync('allure-report');
-  }
-  
-  // Write HTML file
-  fs.writeFileSync('allure-report/index.html', html);
+        // Create report directory if it doesn't exist
+        if (!fs.existsSync('allure-report')) {
+          fs.mkdirSync('allure-report');
+        }
+
+        // Write HTML file
+        fs.writeFileSync('allure-report/index.html', html);
   
   console.log('✅ Allure HTML report generated successfully!');
   console.log('📁 Location: allure-report/index.html');

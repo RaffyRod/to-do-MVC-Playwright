@@ -10,6 +10,17 @@ playwright-report/
 allure-results/
 allure-report/
 
+# Test attachments (videos, screenshots, traces)
+videos/
+screenshots/
+traces/
+*.webm
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.gif
+
 # Build outputs
 dist/
 build/
