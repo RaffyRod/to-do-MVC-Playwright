@@ -239,7 +239,7 @@ await allure.owner('QA Team');
 
 The test report is automatically deployed to GitHub Pages after each push to the main branch:
 
-**🌐 [View Live Report](https://raffyrod.github.io/to-do-MVC-Playwright/test-report/)**
+**🌐 [View Live Report](https://raffyrod.github.io/to-do-MVC-Playwright/)**
 
 This live report includes:
 
@@ -284,7 +284,7 @@ The project includes a comprehensive CI/CD pipeline that runs on every push and 
 
 The test report is automatically deployed to GitHub Pages and is accessible at:
 
-**🌐 [https://raffyrod.github.io/to-do-MVC-Playwright/test-report/](https://raffyrod.github.io/to-do-MVC-Playwright/test-report/)**
+**🌐 [https://raffyrod.github.io/to-do-MVC-Playwright/](https://raffyrod.github.io/to-do-MVC-Playwright/)**
 
 This report includes:
 
