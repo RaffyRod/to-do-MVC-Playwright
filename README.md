@@ -230,7 +230,24 @@ await allure.owner('QA Team');
 
 ### Report Features
 
-### Playwright HTML Report
+- **Professional design**: Modern and responsive CSS
+- **Complete information**: All execution data
+- **Easy navigation**: Clear and organized structure
+- **Exportable**: Static reports for sharing
+
+### Live Report Access
+
+The test report is automatically deployed to GitHub Pages after each push to the main branch:
+
+**🌐 [View Live Report](https://raffyrod.github.io/to-do-MVC-Playwright/test-report/)**
+
+This live report includes:
+
+- 📊 **Interactive pie chart** showing test execution percentages
+- 🎥 **Videos and screenshots** for failed tests
+- 🔍 **Browser-specific filtering** (Chromium, Firefox, WebKit)
+- 📈 **Detailed metrics** including duration and status
+- 🎨 **Modern responsive design** with professional UI
 
 ```bash
 # Generate Playwright's default HTML report
@@ -262,6 +279,20 @@ The project includes a comprehensive CI/CD pipeline that runs on every push and 
 - ✅ **GitHub Pages deployment**: Live report accessible via URL
 - ✅ **PR integration**: Automatic comments with report links
 - ✅ **Artifact retention**: Test results stored for 30 days
+
+#### Live Report Access:
+
+The test report is automatically deployed to GitHub Pages and is accessible at:
+
+**🌐 [https://raffyrod.github.io/to-do-MVC-Playwright/test-report/](https://raffyrod.github.io/to-do-MVC-Playwright/test-report/)**
+
+This report includes:
+
+- 📊 **Interactive pie chart** showing test execution percentages
+- 🎥 **Videos and screenshots** for failed tests
+- 🔍 **Browser-specific filtering** (Chromium, Firefox, WebKit)
+- 📈 **Detailed metrics** including duration and status
+- 🎨 **Modern responsive design** with professional UI
 
 ### Pre-commit Hooks
 
