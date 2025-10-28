@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('Generating basic Allure HTML report...');
+console.log('Generating enhanced Allure HTML report...');
 
 try {
   // Read all JSON result files
@@ -14,10 +14,58 @@ try {
     const filePath = path.join(resultsDir, file);
     const content = fs.readFileSync(filePath, 'utf8');
     const result = JSON.parse(content);
+    
+    // Calculate duration if not present
+    if (!result.time && result.start && result.stop) {
+      result.time = result.stop - result.start;
+    }
+    
+    // Ensure time is a number
+    result.time = result.time || 0;
+    
+    // Extract browser information from test name or labels
+    let browser = 'Unknown';
+    if (result.labels) {
+      const browserLabel = result.labels.find(label => label.name === 'browser');
+      if (browserLabel) {
+        browser = browserLabel.value;
+      }
+    }
+    
+    // Fallback: try to extract browser from test name
+    if (browser === 'Unknown' && result.name) {
+      if (result.name.includes('chromium')) browser = 'Chromium';
+      else if (result.name.includes('firefox')) browser = 'Firefox';
+      else if (result.name.includes('webkit')) browser = 'WebKit';
+    }
+    
+    result.browser = browser;
     allResults.push(result);
   });
   
-  // Create basic HTML
+  // Helper function to format duration
+  function formatDuration(ms) {
+    if (!ms || ms === 0) return '0ms';
+    if (ms < 1000) return ms + 'ms';
+    if (ms < 60000) return (ms / 1000).toFixed(2) + 's';
+    return (ms / 60000).toFixed(2) + 'm';
+  }
+  
+  // Create enhanced HTML with filters
+  const passedTests = allResults.filter(r => r.status === 'passed');
+  const failedTests = allResults.filter(r => r.status === 'failed');
+  const skippedTests = allResults.filter(r => r.status === 'skipped');
+  const totalDuration = allResults.reduce((sum, r) => sum + (r.time || 0), 0);
+  
+  // Get unique browsers
+  const browsers = [...new Set(allResults.map(r => r.browser))];
+  
+  // Group tests by browser
+  const testsByBrowser = browsers.reduce((acc, browser) => {
+    acc[browser] = allResults.filter(r => r.browser === browser);
+    return acc;
+  }, {});
+  
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -26,21 +74,209 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Allure Report - TodoMVC Tests</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 30px; }
-        .summary { display: flex; justify-content: space-around; margin: 20px 0; }
-        .stat { text-align: center; padding: 15px; background: #f8f9fa; border-radius: 5px; }
-        .stat-number { font-size: 24px; font-weight: bold; color: #28a745; }
-        .stat-label { color: #666; margin-top: 5px; }
-        .test-case { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-        .test-title { font-weight: bold; margin-bottom: 10px; }
-        .test-status { padding: 5px 10px; border-radius: 3px; color: white; font-size: 12px; }
-        .status-passed { background-color: #28a745; }
-        .status-failed { background-color: #dc3545; }
-        .steps { margin-top: 10px; }
-        .step { margin: 5px 0; padding: 5px; background: #f8f9fa; border-left: 3px solid #007bff; }
-        .timestamp { color: #666; font-size: 12px; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 40px; 
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .header h1 { 
+            color: #2c3e50; 
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .header p { 
+            color: #7f8c8d; 
+            font-size: 1.1em;
+        }
+        .summary { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+            margin: 30px 0; 
+        }
+        .stat { 
+            text-align: center; 
+            padding: 25px; 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px; 
+            border: 1px solid #dee2e6;
+            transition: transform 0.3s ease;
+        }
+        .stat:hover { transform: translateY(-5px); }
+        .stat-number { 
+            font-size: 2.5em; 
+            font-weight: bold; 
+            margin-bottom: 10px;
+        }
+        .stat-passed .stat-number { color: #28a745; }
+        .stat-failed .stat-number { color: #dc3545; }
+        .stat-skipped .stat-number { color: #ffc107; }
+        .stat-total .stat-number { color: #007bff; }
+        .stat-label { 
+            color: #6c757d; 
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .filters {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .filters h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: #6c757d;
+            color: white;
+        }
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .filter-btn.active {
+            background: #007bff;
+        }
+        .filter-btn.passed { background: #28a745; }
+        .filter-btn.failed { background: #dc3545; }
+        .filter-btn.skipped { background: #ffc107; color: #000; }
+        .filter-btn.browser { background: #17a2b8; }
+        .browser-badge {
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: normal;
+            margin-left: 10px;
+        }
+        .browser-name {
+            font-weight: bold;
+            color: #17a2b8;
+        }
+        .test-case { 
+            margin: 20px 0; 
+            padding: 20px; 
+            border: 1px solid #dee2e6; 
+            border-radius: 10px; 
+            background: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .test-case:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .test-case.hidden { display: none; }
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .test-title { 
+            font-weight: bold; 
+            font-size: 1.2em;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .test-status { 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            color: white; 
+            font-size: 12px; 
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .status-passed { background: linear-gradient(135deg, #28a745, #20c997); }
+        .status-failed { background: linear-gradient(135deg, #dc3545, #e74c3c); }
+        .status-skipped { background: linear-gradient(135deg, #ffc107, #fd7e14); color: #000; }
+        .test-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .test-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .steps { 
+            margin-top: 15px; 
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .steps h4 {
+            margin-top: 0;
+            color: #495057;
+            font-size: 1em;
+        }
+        .step { 
+            margin: 8px 0; 
+            padding: 10px; 
+            background: white; 
+            border-left: 4px solid #007bff; 
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .step-name {
+            font-weight: 500;
+            color: #495057;
+        }
+        .step-status {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .no-tests {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        .duration {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .timestamp {
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
@@ -51,37 +287,121 @@ try {
         </div>
         
         <div class="summary">
-            <div class="stat">
+            <div class="stat stat-total">
                 <div class="stat-number">${allResults.length}</div>
-                <div class="stat-label">Tests Ejecutados</div>
+                <div class="stat-label">Total Tests</div>
             </div>
-            <div class="stat">
-                <div class="stat-number">${allResults.filter(r => r.status === 'passed').length}</div>
-                <div class="stat-label">Exitosos</div>
+            <div class="stat stat-passed">
+                <div class="stat-number">${passedTests.length}</div>
+                <div class="stat-label">Passed</div>
             </div>
-            <div class="stat">
-                <div class="stat-number">${allResults.filter(r => r.status === 'failed').length}</div>
-                <div class="stat-label">Fallidos</div>
+            <div class="stat stat-failed">
+                <div class="stat-number">${failedTests.length}</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat stat-skipped">
+                <div class="stat-number">${skippedTests.length}</div>
+                <div class="stat-label">Skipped</div>
             </div>
         </div>
         
-        <h2>📋 Detalles de Tests</h2>
-        ${allResults.map(result => `
-            <div class="test-case">
-                <div class="test-title">${result.name}</div>
-                <div class="test-status status-${result.status}">${result.status.toUpperCase()}</div>
-                <div class="timestamp">Duración: ${result.time}ms | Ejecutado: ${new Date(result.start).toLocaleString()}</div>
-                ${result.steps ? `
-                    <div class="steps">
-                        <strong>Pasos:</strong>
-                        ${result.steps.map(step => `
-                            <div class="step">${step.name}</div>
-                        `).join('')}
-                    </div>
-                ` : ''}
+        <div class="filters">
+            <h3>🔍 Filter Tests</h3>
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterTests('all', 'all')">All Tests</button>
+                <button class="filter-btn passed" onclick="filterTests('passed', 'all')">Passed Only</button>
+                <button class="filter-btn failed" onclick="filterTests('failed', 'all')">Failed Only</button>
+                <button class="filter-btn skipped" onclick="filterTests('skipped', 'all')">Skipped Only</button>
             </div>
-        `).join('')}
+            <h4>🌐 Filter by Browser</h4>
+            <div class="filter-buttons">
+                <button class="filter-btn browser" onclick="filterByBrowser('all')">All Browsers</button>
+                ${browsers.map(browser => `
+                    <button class="filter-btn browser" onclick="filterByBrowser('${browser}')">${browser}</button>
+                `).join('')}
+            </div>
+        </div>
+        
+        <h2>📋 Test Details</h2>
+        <div id="test-results">
+            ${allResults.map(result => `
+                <div class="test-case" data-status="${result.status}" data-browser="${result.browser}">
+                    <div class="test-header">
+                        <h3 class="test-title">${result.name} <span class="browser-badge">[${result.browser}]</span></h3>
+                        <div class="test-status status-${result.status}">${result.status.toUpperCase()}</div>
+                    </div>
+                    <div class="test-meta">
+                        <span><strong>Duration:</strong> <span class="duration">${formatDuration(result.time)}</span></span>
+                        <span><strong>Executed:</strong> <span class="timestamp">${new Date(result.start).toLocaleString()}</span></span>
+                        <span><strong>Browser:</strong> <span class="browser-name">${result.browser}</span></span>
+                    </div>
+                    ${result.steps && result.steps.length > 0 ? `
+                        <div class="steps">
+                            <h4>📝 Test Steps:</h4>
+                            ${result.steps.map(step => `
+                                <div class="step">
+                                    <div class="step-name">${step.name}</div>
+                                    ${step.status ? `<div class="step-status">Status: ${step.status}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('')}
+        </div>
     </div>
+    
+    <script>
+        let currentStatusFilter = 'all';
+        let currentBrowserFilter = 'all';
+        
+        function filterTests(status, browser) {
+            currentStatusFilter = status;
+            currentBrowserFilter = browser;
+            
+            // Update button states
+            const statusButtons = document.querySelectorAll('.filter-btn:not(.browser)');
+            statusButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            applyFilters();
+        }
+        
+        function filterByBrowser(browser) {
+            currentBrowserFilter = browser;
+            
+            // Update browser button states
+            const browserButtons = document.querySelectorAll('.filter-btn.browser');
+            browserButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            applyFilters();
+        }
+        
+        function applyFilters() {
+            const testCases = document.querySelectorAll('.test-case');
+            testCases.forEach(test => {
+                const testStatus = test.dataset.status;
+                const testBrowser = test.dataset.browser;
+                
+                const statusMatch = currentStatusFilter === 'all' || testStatus === currentStatusFilter;
+                const browserMatch = currentBrowserFilter === 'all' || testBrowser === currentBrowserFilter;
+                
+                if (statusMatch && browserMatch) {
+                    test.classList.remove('hidden');
+                } else {
+                    test.classList.add('hidden');
+                }
+            });
+        }
+        
+        function formatDuration(ms) {
+            if (!ms || ms === 0) return '0ms';
+            if (ms < 1000) return ms + 'ms';
+            if (ms < 60000) return (ms / 1000).toFixed(2) + 's';
+            return (ms / 60000).toFixed(2) + 'm';
+        }
+    </script>
 </body>
 </html>`;
   
