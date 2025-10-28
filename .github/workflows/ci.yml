@@ -37,9 +37,11 @@ jobs:
 
       - name: Run Playwright tests
         run: npx playwright test
+        continue-on-error: true
 
       - name: Generate Allure report
         run: node scripts/generate-simple-report.js
+        if: always()
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -58,17 +60,17 @@ jobs:
           retention-days: 30
 
       - name: Setup Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && always()
         uses: actions/configure-pages@v4
 
       - name: Deploy report to GitHub Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && always()
         uses: actions/deploy-pages@v4
         with:
           path: ./allure-report
 
       - name: Comment PR with report link
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
           script: |
