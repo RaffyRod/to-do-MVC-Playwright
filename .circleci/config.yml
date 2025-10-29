@@ -17,15 +17,19 @@ jobs:
             - v1-dependencies-
 
       - run:
-          name: Install dependencies
-          command: npm ci
-
-      - run:
-          name: Update Playwright to latest version
+          name: Install Java and dependencies
           command: |
+            echo "☕ Installing Java for Allure..."
+            apt-get update && apt-get install -y openjdk-11-jdk
+            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+            echo "JAVA_HOME=$JAVA_HOME" >> ~/.bashrc
+
+            echo "📦 Installing dependencies..."
+            npm ci
+
             echo "🔄 Updating Playwright to latest version..."
             npm install @playwright/test@latest
-            echo "✅ Playwright updated to latest version"
+            echo "✅ Dependencies installed successfully"
 
       - run:
           name: Run linter
@@ -49,7 +53,9 @@ jobs:
 
       - run:
           name: Generate Allure report
-          command: node scripts/generate-simple-report.js
+          command: |
+            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+            node scripts/generate-simple-report.js
           when: always
 
       - run:

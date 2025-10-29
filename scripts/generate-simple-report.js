@@ -30,6 +30,11 @@ try {
     console.log('🧹 Cleaned old report directory');
   }
 
+  // Set JAVA_HOME if not already set
+  if (!process.env.JAVA_HOME) {
+    process.env.JAVA_HOME = '/usr/lib/jvm/java-11-openjdk-amd64';
+  }
+
   // Generate Allure report using official command
   console.log('📊 Generating Allure report...');
 
@@ -38,6 +43,7 @@ try {
     execSync('npx allure generate allure-results --clean -o allure-report', {
       stdio: 'inherit',
       cwd: process.cwd(),
+      env: { ...process.env, JAVA_HOME: process.env.JAVA_HOME },
     });
     console.log('✅ Allure report generated successfully!');
   } catch (error) {
@@ -48,6 +54,7 @@ try {
       execSync('allure generate allure-results --clean -o allure-report', {
         stdio: 'inherit',
         cwd: process.cwd(),
+        env: { ...process.env, JAVA_HOME: process.env.JAVA_HOME },
       });
       console.log('✅ Allure report generated successfully!');
     } catch (error2) {
@@ -64,6 +71,7 @@ try {
       execSync('npx allure generate allure-results --clean -o allure-report', {
         stdio: 'inherit',
         cwd: process.cwd(),
+        env: { ...process.env, JAVA_HOME: process.env.JAVA_HOME },
       });
       console.log('✅ Allure report generated successfully!');
     }
