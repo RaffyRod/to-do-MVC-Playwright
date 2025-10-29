@@ -269,21 +269,25 @@ The project uses CircleCI for reliable CI/CD pipeline that runs on every push to
 5. **Browser Installation**: Install Playwright browsers
 6. **Test Execution**: Run all tests across multiple browsers
 7. **Report Generation**: Generate Allure HTML report
-8. **GitHub Pages Deployment**: Deploy report to GitHub Pages using gh-pages branch
+8. **Online Deployment**: Deploy report to GitHub Pages automatically
+9. **Artifact Storage**: Store reports as downloadable artifacts
 
 #### Features:
 
 - ✅ **Multi-browser testing**: Chromium, Firefox, WebKit
 - ✅ **Automatic report generation**: HTML report with metrics
-- ✅ **GitHub Pages deployment**: Live report accessible via URL
-- ✅ **Reliable deployment**: Uses CircleCI instead of GitHub Actions
+- ✅ **Online deployment**: Report automatically available at public URL
+- ✅ **CircleCI Artifacts**: Downloadable reports from CircleCI dashboard
+- ✅ **Reliable deployment**: Uses GitHub Pages for hosting
 - ✅ **Simple configuration**: Easy to maintain and debug
 
-#### Live Report Access:
+#### Report Access:
 
-The test report is automatically deployed to GitHub Pages and is accessible at:
+The test report is automatically deployed online and available at:
 
-**🌐 [https://raffyrod.github.io/to-do-MVC-Playwright/](https://raffyrod.github.io/to-do-MVC-Playwright/)**
+**🌐 [Live Test Report](https://raffyrod.github.io/to-do-MVC-Playwright/)**
+
+**📥 [CircleCI Artifacts](https://app.circleci.com/pipelines/github/RaffyRod/to-do-MVC-Playwright)** (for download)
 
 This report includes:
 
@@ -291,6 +295,8 @@ This report includes:
 - 🔍 **Browser-specific filtering** (Chromium, Firefox, WebKit)
 - 📈 **Detailed metrics** including duration and status
 - 🎨 **Modern responsive design** with professional UI
+- 🌐 **Online access** - no login required
+- 📁 **Downloadable artifacts** for offline viewing
 
 ### Pre-commit Hooks
 

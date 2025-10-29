@@ -41,9 +41,55 @@ jobs:
 
       - run:
           name: Deploy to GitHub Pages
-          command: node scripts/deploy-to-pages.js
+          command: |
+            echo "🚀 Starting GitHub Pages deployment..."
+
+            # Install GitHub CLI
+            if ! command -v gh &> /dev/null; then
+              echo "📦 Installing GitHub CLI..."
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+              sudo apt update && sudo apt install gh -y
+            fi
+
+            # Configure git
+            git config --global user.name "CircleCI"
+            git config --global user.email "circleci@example.com"
+
+            # Clone gh-pages branch
+            echo "📥 Cloning gh-pages branch..."
+            if [ -d "gh-pages" ]; then
+              rm -rf gh-pages
+            fi
+            git clone --branch gh-pages --single-branch https://github.com/RaffyRod/to-do-MVC-Playwright.git gh-pages
+
+            # Copy report files
+            echo "📋 Copying report files..."
+            cp -r allure-report/* gh-pages/
+
+            # Commit and push
+            echo "💾 Committing changes..."
+            cd gh-pages
+            git add .
+            git commit -m "Update test report - $(date)" || echo "No changes to commit"
+
+            echo "🚀 Pushing to GitHub Pages..."
+            git push https://$GITHUB_TOKEN@github.com/RaffyRod/to-do-MVC-Playwright.git gh-pages
+
+            echo "✅ Successfully deployed to GitHub Pages!"
+            echo "🌐 Report available at: https://raffyrod.github.io/to-do-MVC-Playwright/"
           environment:
             GITHUB_TOKEN: $GITHUB_TOKEN
+          when: always
+
+      - store_artifacts:
+          path: allure-report/
+          destination: allure-report
+          when: always
+
+      - store_artifacts:
+          path: test-results/
+          destination: test-results
           when: always
 
       - save_cache:
