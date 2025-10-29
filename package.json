@@ -24,10 +24,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.56.1",
+    "@playwright/test": "latest",
     "@types/node": "^24.9.1",
     "allure-commandline": "^2.34.1",
-    "allure-playwright": "^3.4.2",
+    "allure-playwright": "latest",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "prettier": "^3.6.2",
