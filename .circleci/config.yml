@@ -3,13 +3,11 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/node:20.0
+      - image: mcr.microsoft.com/playwright:v1.40.0-focal
     working_directory: ~/repo
     environment:
-      # Optimize Playwright downloads
-      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: false
-      PLAYWRIGHT_DOWNLOAD_HOST: https://cdn.playwright.dev
-      PLAYWRIGHT_DOWNLOAD_TIMEOUT: 300000
+      # Playwright browsers are pre-installed in Docker image
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
     steps:
       - checkout
 
@@ -17,11 +15,6 @@ jobs:
           keys:
             - v1-dependencies-{{ checksum "package-lock.json" }}
             - v1-dependencies-
-
-      - restore_cache:
-          keys:
-            - v1-playwright-browsers-{{ checksum "package-lock.json" }}
-            - v1-playwright-browsers-
 
       - run:
           name: Install dependencies
@@ -39,30 +32,11 @@ jobs:
           command: npm run lint
 
       - run:
-          name: Install Playwright browsers
+          name: Verify Playwright browsers
           command: |
-            echo "📦 Installing Playwright browsers (latest version)..."
-
-            # Check if browsers are already cached
-            if [ -d "$HOME/.cache/ms-playwright" ] && [ "$(ls -A $HOME/.cache/ms-playwright)" ]; then
-              echo "✅ Browsers found in cache, updating to latest..."
-              npx playwright install --with-deps
-            else
-              echo "📥 Browsers not in cache, downloading latest versions..."
-              
-              # Try primary CDN first
-              echo "🔄 Trying primary CDN (cdn.playwright.dev)..."
-              if ! npx playwright install chromium firefox webkit --with-deps; then
-                echo "⚠️  Primary CDN failed, trying fallback..."
-                # Fallback to Microsoft CDN
-                PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.download.prss.microsoft.com npx playwright install chromium firefox webkit --with-deps
-              fi
-            fi
-
-            # Verify browser versions
-            echo "🔍 Installed browser versions:"
+            echo "🔍 Verifying Playwright browsers..."
             npx playwright --version
-            echo "✅ Browsers installed successfully"
+            echo "✅ Browsers are pre-installed in Docker image"
 
       - run:
           name: Clean old results
@@ -136,11 +110,6 @@ jobs:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package-lock.json" }}
-
-      - save_cache:
-          paths:
-            - ~/.cache/ms-playwright
-          key: v1-playwright-browsers-{{ checksum "package-lock.json" }}
 
 workflows:
   test-and-deploy:
