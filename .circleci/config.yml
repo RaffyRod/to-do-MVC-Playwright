@@ -1,0 +1,63 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0
+
+jobs:
+  test:
+    docker:
+      - image: cimg/node:18.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-
+
+      - run:
+          name: Install dependencies
+          command: npm ci
+
+      - run:
+          name: Run linter
+          command: npm run lint
+
+      - run:
+          name: Install Playwright browsers
+          command: npx playwright install --with-deps
+
+      - run:
+          name: Clean old results
+          command: node scripts/clean-allure-results.js
+
+      - run:
+          name: Run Playwright tests
+          command: npx playwright test
+          when: on_success
+
+      - run:
+          name: Generate Allure report
+          command: node scripts/generate-simple-report.js
+          when: always
+
+      - run:
+          name: Deploy to GitHub Pages
+          command: node scripts/deploy-to-pages.js
+          environment:
+            GITHUB_TOKEN: $GITHUB_TOKEN
+          when: always
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package-lock.json" }}
+
+workflows:
+  test-and-deploy:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only: main
