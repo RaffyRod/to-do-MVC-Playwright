@@ -8,7 +8,8 @@ jobs:
     environment:
       # Optimize Playwright downloads
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: false
-      PLAYWRIGHT_DOWNLOAD_HOST: https://playwright.download.prss.microsoft.com
+      PLAYWRIGHT_DOWNLOAD_HOST: https://cdn.playwright.dev
+      PLAYWRIGHT_DOWNLOAD_TIMEOUT: 300000
     steps:
       - checkout
 
@@ -48,8 +49,14 @@ jobs:
               npx playwright install --with-deps
             else
               echo "📥 Browsers not in cache, downloading latest versions..."
-              # Install only required browsers for faster setup
-              npx playwright install chromium firefox webkit --with-deps
+              
+              # Try primary CDN first
+              echo "🔄 Trying primary CDN (cdn.playwright.dev)..."
+              if ! npx playwright install chromium firefox webkit --with-deps; then
+                echo "⚠️  Primary CDN failed, trying fallback..."
+                # Fallback to Microsoft CDN
+                PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.download.prss.microsoft.com npx playwright install chromium firefox webkit --with-deps
+              fi
             fi
 
             # Verify browser versions
