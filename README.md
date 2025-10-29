@@ -42,17 +42,17 @@ Automated testing project for the TodoMVC application using Playwright with Type
 
 ## 🛠️ Technologies
 
-| Technology         | Version | Purpose                     |
-| ------------------ | ------- | --------------------------- |
-| **Playwright**     | ^1.56.1 | Automation framework        |
-| **TypeScript**     | ^5.9.3  | Static typing and better DX |
-| **Node.js**        | ^18+    | JavaScript runtime          |
-| **Allure**         | ^3.4.2  | Report generation           |
-| **Prettier**       | ^3.6.2  | Code formatting             |
-| **Husky**          | ^9.1.7  | Git hooks                   |
-| **lint-staged**    | ^16.2.6 | Pre-commit linting          |
-| **GitHub Actions** | -       | CI/CD pipeline              |
-| **npm**            | ^9+     | Package manager             |
+| Technology      | Version | Purpose                     |
+| --------------- | ------- | --------------------------- |
+| **Playwright**  | ^1.56.1 | Automation framework        |
+| **TypeScript**  | ^5.9.3  | Static typing and better DX |
+| **Node.js**     | ^18+    | JavaScript runtime          |
+| **Allure**      | ^3.4.2  | Report generation           |
+| **Prettier**    | ^3.6.2  | Code formatting             |
+| **Husky**       | ^9.1.7  | Git hooks                   |
+| **lint-staged** | ^16.2.6 | Pre-commit linting          |
+| **CircleCI**    | -       | CI/CD pipeline              |
+| **npm**         | ^9+     | Package manager             |
 
 ## 🎯 Design Patterns
 
@@ -77,9 +77,8 @@ Automated testing project for the TodoMVC application using Playwright with Type
 ## 📁 Project Structure
 
 ```
-├── 📁 .github/                   # GitHub Actions workflows
-│   └── 📁 workflows/
-│       └── 📄 ci.yml             # CI/CD pipeline configuration
+├── 📁 .circleci/                 # CircleCI configuration
+│   └── 📄 config.yml             # CI/CD pipeline configuration
 ├── 📁 .husky/                    # Git hooks configuration
 │   └── 📄 pre-commit             # Pre-commit hook
 ├── 📁 pages/                     # Page Object Models
@@ -87,7 +86,8 @@ Automated testing project for the TodoMVC application using Playwright with Type
 │   └── 📄 todo-mvc.page.ts      # TodoMVC specific page
 ├── 📁 scripts/                   # Utility scripts
 │   ├── 📄 clean-allure-results.js # Clean old test results
-│   └── 📄 generate-simple-report.js # Custom HTML report generator
+│   ├── 📄 generate-simple-report.js # Custom HTML report generator
+│   └── 📄 deploy-to-pages.js     # GitHub Pages deployment script
 ├── 📁 types/                     # TypeScript type definitions
 │   └── 📄 todo.types.ts         # Interfaces and types for TodoMVC
 ├── 📁 utils/                     # Utilities and constants
@@ -256,9 +256,9 @@ npm run test:html
 
 ## 🔄 CI/CD Pipeline
 
-### GitHub Actions
+### CircleCI
 
-The project includes a comprehensive CI/CD pipeline that runs on every push and pull request:
+The project uses CircleCI for reliable CI/CD pipeline that runs on every push to main branch:
 
 #### Pipeline Steps:
 
@@ -268,17 +268,16 @@ The project includes a comprehensive CI/CD pipeline that runs on every push and 
 4. **Linting**: Run TypeScript type checking and Prettier formatting
 5. **Browser Installation**: Install Playwright browsers
 6. **Test Execution**: Run all tests across multiple browsers
-7. **Artifact Upload**: Save test results and reports
-8. **Report Deployment**: Deploy report to GitHub Pages (main branch)
-9. **PR Comments**: Add report link to pull request comments
+7. **Report Generation**: Generate Allure HTML report
+8. **GitHub Pages Deployment**: Deploy report to GitHub Pages using gh-pages branch
 
 #### Features:
 
 - ✅ **Multi-browser testing**: Chromium, Firefox, WebKit
-- ✅ **Automatic report generation**: HTML report with videos/screenshots
+- ✅ **Automatic report generation**: HTML report with metrics
 - ✅ **GitHub Pages deployment**: Live report accessible via URL
-- ✅ **PR integration**: Automatic comments with report links
-- ✅ **Artifact retention**: Test results stored for 30 days
+- ✅ **Reliable deployment**: Uses CircleCI instead of GitHub Actions
+- ✅ **Simple configuration**: Easy to maintain and debug
 
 #### Live Report Access:
 
@@ -289,7 +288,6 @@ The test report is automatically deployed to GitHub Pages and is accessible at:
 This report includes:
 
 - 📊 **Interactive pie chart** showing test execution percentages
-- 🎥 **Videos and screenshots** for failed tests
 - 🔍 **Browser-specific filtering** (Chromium, Firefox, WebKit)
 - 📈 **Detailed metrics** including duration and status
 - 🎨 **Modern responsive design** with professional UI
