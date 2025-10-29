@@ -76,46 +76,13 @@ try {
   // Get unique browsers
   const browsers = [...new Set(allResults.map(r => r.browser))];
 
-  // Clean and recreate attachments directory to avoid duplicates
+  // Skip attachments for now to avoid GitHub Pages deployment issues
+  console.log('Skipping attachments to ensure GitHub Pages deployment works');
   const attachmentsDir = path.join('allure-report', 'attachments');
   if (fs.existsSync(attachmentsDir)) {
     fs.rmSync(attachmentsDir, { recursive: true, force: true });
   }
-  fs.mkdirSync(attachmentsDir, { recursive: true });
-
-  const copiedFiles = new Map(); // Track copied files with their new names
-
-  allResults.forEach((result, testIndex) => {
-    const attachments = extractAttachments(result);
-    attachments.forEach((attachment, attachmentIndex) => {
-      const sourcePath = path.join('allure-results', attachment.source);
-
-      if (fs.existsSync(sourcePath)) {
-        try {
-          // Create unique filename: testIndex-attachmentIndex-originalName
-          const originalName = attachment.source.split('-').pop();
-          const extension = path.extname(originalName);
-          const baseName = path.basename(originalName, extension);
-          const uniqueFileName = `${testIndex}-${attachmentIndex}-${baseName}${extension}`;
-          const destPath = path.join(attachmentsDir, uniqueFileName);
-
-          // Only copy if not already copied
-          if (!copiedFiles.has(attachment.source)) {
-            fs.copyFileSync(sourcePath, destPath);
-            copiedFiles.set(attachment.source, uniqueFileName);
-            console.log(`Copied attachment: ${uniqueFileName}`);
-          }
-
-          // Update the attachment source for the HTML
-          attachment.reportPath = `attachments/${copiedFiles.get(attachment.source)}`;
-        } catch (error) {
-          console.log(
-            `Warning: Could not copy ${sourcePath}: ${error.message}`
-          );
-        }
-      }
-    });
-  });
+  // Don't create attachments directory for now
 
   // Helper function to extract attachments from test steps
   function extractAttachments(test) {
@@ -647,26 +614,12 @@ try {
                         ? `
                             <div class="attachments">
                                 <h4>📎 Attachments (Videos & Screenshots):</h4>
-                                ${attachments
-                                  .map((attachment, index) => {
-                                    const fileName = attachment.source
-                                      .split('-')
-                                      .pop();
-                                    const displayName =
-                                      attachment.name || fileName;
-                                    const reportPath =
-                                      attachment.reportPath ||
-                                      `attachments/${allResults.indexOf(result)}-${index}-${fileName}`;
-                                    return `
-                                    <div class="attachment-item">
-                                        <a href="${reportPath}" class="attachment-link" target="_blank">
-                                            ${attachment.type.includes('video') ? '🎥' : attachment.type.includes('image') ? '📸' : '📄'} ${displayName}
-                                        </a>
-                                        <small style="color: #6c757d; margin-left: 10px;">${attachment.type}</small>
-                                    </div>
-                                `;
-                                  })
-                                  .join('')}
+                                <p style="color: #6c757d; font-style: italic;">
+                                    Attachments are available in the test-results folder but not included in this GitHub Pages deployment to ensure compatibility.
+                                </p>
+                                <p style="color: #6c757d; font-size: 0.9em;">
+                                    Found ${attachments.length} attachment(s): ${attachments.map(a => a.name || a.source.split('-').pop()).join(', ')}
+                                </p>
                             </div>
                         `
                         : '';
