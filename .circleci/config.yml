@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.50.0-jammy
+      - image: mcr.microsoft.com/playwright:v1.40.0-focal
     working_directory: ~/repo
     environment:
       # Playwright browsers are pre-installed in Docker image
@@ -26,9 +26,6 @@ jobs:
 
             echo "📦 Installing dependencies..."
             npm ci
-
-            echo "🔄 Updating Playwright to latest version..."
-            npm install @playwright/test@latest
             echo "✅ Dependencies installed successfully"
 
       - run:
