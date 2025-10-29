@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: mcr.microsoft.com/playwright:latest
+      - image: mcr.microsoft.com/playwright:v1.50.0-jammy
     working_directory: ~/repo
     environment:
       # Playwright browsers are pre-installed in Docker image
