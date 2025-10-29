@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.40.0-focal
+      - image: mcr.microsoft.com/playwright:v1.56.1-focal
     working_directory: ~/repo
     environment:
       # Playwright browsers are pre-installed in Docker image
