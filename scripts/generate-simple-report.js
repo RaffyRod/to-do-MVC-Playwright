@@ -76,13 +76,54 @@ try {
   // Get unique browsers
   const browsers = [...new Set(allResults.map(r => r.browser))];
 
-  // Skip attachments for now to avoid GitHub Pages deployment issues
-  console.log('Skipping attachments to ensure GitHub Pages deployment works');
+  // Create attachments directory and copy compressed images only
   const attachmentsDir = path.join('allure-report', 'attachments');
   if (fs.existsSync(attachmentsDir)) {
     fs.rmSync(attachmentsDir, { recursive: true, force: true });
   }
-  // Don't create attachments directory for now
+  fs.mkdirSync(attachmentsDir, { recursive: true });
+
+  const copiedFiles = new Map();
+
+  allResults.forEach((result, testIndex) => {
+    const attachments = extractAttachments(result);
+    attachments.forEach((attachment, attachmentIndex) => {
+      const sourcePath = path.join('allure-results', attachment.source);
+
+      if (fs.existsSync(sourcePath)) {
+        try {
+          // Only include images (PNG, JPG) and skip videos to reduce size
+          const originalName = attachment.source.split('-').pop();
+          const extension = path.extname(originalName).toLowerCase();
+
+          if (
+            extension === '.png' ||
+            extension === '.jpg' ||
+            extension === '.jpeg'
+          ) {
+            const baseName = path.basename(originalName, extension);
+            const uniqueFileName = `${testIndex}-${attachmentIndex}-${baseName}${extension}`;
+            const destPath = path.join(attachmentsDir, uniqueFileName);
+
+            if (!copiedFiles.has(attachment.source)) {
+              fs.copyFileSync(sourcePath, destPath);
+              copiedFiles.set(attachment.source, uniqueFileName);
+              console.log(`Copied image: ${uniqueFileName}`);
+            }
+
+            attachment.reportPath = `attachments/${copiedFiles.get(attachment.source)}`;
+          } else {
+            // For videos and other files, just show info without copying
+            attachment.reportPath = null;
+          }
+        } catch (error) {
+          console.log(
+            `Warning: Could not copy ${sourcePath}: ${error.message}`
+          );
+        }
+      }
+    });
+  });
 
   // Helper function to extract attachments from test steps
   function extractAttachments(test) {
@@ -610,16 +651,46 @@ try {
                     }
                     ${(() => {
                       const attachments = extractAttachments(result);
+                      const imageAttachments = attachments.filter(
+                        a => a.reportPath
+                      );
+                      const otherAttachments = attachments.filter(
+                        a => !a.reportPath
+                      );
+
                       return attachments.length > 0
                         ? `
                             <div class="attachments">
-                                <h4>📎 Attachments (Videos & Screenshots):</h4>
-                                <p style="color: #6c757d; font-style: italic;">
-                                    Attachments are available in the test-results folder but not included in this GitHub Pages deployment to ensure compatibility.
-                                </p>
-                                <p style="color: #6c757d; font-size: 0.9em;">
-                                    Found ${attachments.length} attachment(s): ${attachments.map(a => a.name || a.source.split('-').pop()).join(', ')}
-                                </p>
+                                <h4>📎 Attachments:</h4>
+                                ${
+                                  imageAttachments.length > 0
+                                    ? `
+                                    <h5>📸 Screenshots:</h5>
+                                    ${imageAttachments
+                                      .map(
+                                        attachment => `
+                                        <div class="attachment-item">
+                                            <a href="${attachment.reportPath}" class="attachment-link" target="_blank">
+                                                📸 ${attachment.name || attachment.source.split('-').pop()}
+                                            </a>
+                                            <small style="color: #6c757d; margin-left: 10px;">${attachment.type}</small>
+                                        </div>
+                                    `
+                                      )
+                                      .join('')}
+                                `
+                                    : ''
+                                }
+                                ${
+                                  otherAttachments.length > 0
+                                    ? `
+                                    <h5>📹 Other Files (not included):</h5>
+                                    <p style="color: #6c757d; font-size: 0.9em;">
+                                        ${otherAttachments.map(a => a.name || a.source.split('-').pop()).join(', ')}
+                                    </p>
+                                `
+                                    : ''
+                                }
                             </div>
                         `
                         : '';
