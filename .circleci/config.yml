@@ -81,56 +81,7 @@ jobs:
             ls -la allure-report/ || echo "No allure-report directory"
           when: always
 
-      - run:
-          name: Deploy to GitHub Pages
-          command: |
-            echo "🚀 Starting GitHub Pages deployment..."
-
-            # Install GitHub CLI
-            if ! command -v gh &> /dev/null; then
-              echo "📦 Installing GitHub CLI..."
-              # Download and install GitHub CLI directly
-              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
-              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-              apt-get update && apt-get install gh -y
-            fi
-
-            # Configure git
-            git config --global user.name "CircleCI"
-            git config --global user.email "circleci@example.com"
-
-            # Clone gh-pages branch (token-authenticated)
-            echo "📥 Cloning gh-pages branch..."
-            if [ -d "gh-pages" ]; then
-              rm -rf gh-pages
-            fi
-            git clone --branch gh-pages --single-branch https://$GITHUB_TOKEN@github.com/RaffyRod/to-do-MVC-Playwright.git gh-pages
-
-            # Copy report files
-            echo "📋 Copying report files..."
-            if [ -d "allure-report" ] && [ "$(ls -A allure-report)" ]; then
-              echo "✅ Found Allure report, copying..."
-              cp -r allure-report/* gh-pages/
-            else
-              echo "⚠️  No Allure report found, creating placeholder..."
-              mkdir -p gh-pages
-              echo "<html><body><h1>Test Report</h1><p>No report available. Check test execution logs.</p></body></html>" > gh-pages/index.html
-            fi
-
-            # Commit and push
-            echo "💾 Committing changes..."
-            cd gh-pages
-            git add .
-            git commit -m "Update test report - $(date)" || echo "No changes to commit"
-
-            echo "🚀 Pushing to GitHub Pages..."
-            git push https://$GITHUB_TOKEN@github.com/RaffyRod/to-do-MVC-Playwright.git gh-pages:gh-pages
-
-            echo "✅ Successfully deployed to GitHub Pages!"
-            echo "🌐 Report available at: https://raffyrod.github.io/to-do-MVC-Playwright/"
-          environment:
-            GITHUB_TOKEN: $GITHUB_TOKEN
-          when: always
+      # Deployment via CircleCI artifacts only (no GitHub Pages)
 
       - store_artifacts:
           path: allure-report/
