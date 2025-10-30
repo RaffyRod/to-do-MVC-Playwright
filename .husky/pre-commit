@@ -3,9 +3,19 @@ set -e
 
 # Professional logging with optional colors (avoid raw escape codes when unsupported)
 USE_COLOR=0
-if [ -t 1 ] && command -v tput >/dev/null 2>&1; then
-  if [ "$(tput colors)" -ge 8 ] && [ "${NO_COLOR:-0}" = 0 ] && [ "${TERM:-}" != "dumb" ]; then
-    USE_COLOR=1
+
+# Force no color on Windows shells to avoid showing raw escape codes in cmd.exe/PowerShell
+IS_WINDOWS=0
+case "$(uname -s 2>/dev/null | tr '[:upper:]' '[:lower:]')" in
+  msys*|mingw*|cygwin*) IS_WINDOWS=1 ;;
+esac
+if [ "${OS:-}" = "Windows_NT" ] || [ "$IS_WINDOWS" -eq 1 ]; then
+  USE_COLOR=0
+else
+  if [ -t 1 ] && command -v tput >/dev/null 2>&1; then
+    if [ "$(tput colors)" -ge 8 ] && [ "${NO_COLOR:-0}" = 0 ] && [ "${TERM:-}" != "dumb" ]; then
+      USE_COLOR=1
+    fi
   fi
 fi
 
