@@ -73,7 +73,14 @@ jobs:
 
             # Copy report files
             echo "📋 Copying report files..."
-            cp -r allure-report/* gh-pages/
+            if [ -d "allure-report" ] && [ "$(ls -A allure-report)" ]; then
+              echo "✅ Found Allure report, copying..."
+              cp -r allure-report/* gh-pages/
+            else
+              echo "⚠️  No Allure report found, creating placeholder..."
+              mkdir -p gh-pages
+              echo "<html><body><h1>Test Report</h1><p>No report available. Check test execution logs.</p></body></html>" > gh-pages/index.html
+            fi
 
             # Commit and push
             echo "💾 Committing changes..."

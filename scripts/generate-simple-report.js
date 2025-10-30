@@ -9,7 +9,8 @@ try {
   const resultsDir = 'allure-results';
   if (!fs.existsSync(resultsDir)) {
     console.log('❌ No allure-results directory found');
-    process.exit(1);
+    console.log('📁 Creating allure-results directory...');
+    fs.mkdirSync(resultsDir, { recursive: true });
   }
 
   // Check if there are any JSON files
@@ -18,7 +19,61 @@ try {
     .filter(file => file.endsWith('.json'));
   if (files.length === 0) {
     console.log('❌ No JSON result files found in allure-results');
-    process.exit(1);
+    console.log('📁 Checking test-results directory...');
+
+    // Check if test-results directory exists and has files
+    const testResultsDir = 'test-results';
+    if (fs.existsSync(testResultsDir)) {
+      const testFiles = fs.readdirSync(testResultsDir, { recursive: true });
+      console.log(`Found ${testFiles.length} files in test-results`);
+      if (testFiles.length > 0) {
+        console.log(
+          '⚠️  Tests ran but Allure results not generated. This might be due to test failures.'
+        );
+        console.log('📋 Test results available in test-results directory');
+      }
+    }
+
+    console.log('🔄 Attempting to generate a basic report...');
+    // Create a basic HTML report even without Allure results
+    const basicReport = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Report - No Allure Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .error { color: #d32f2f; background: #ffebee; padding: 20px; border-radius: 4px; }
+        .info { color: #1976d2; background: #e3f2fd; padding: 20px; border-radius: 4px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Test Report</h1>
+    <div class="error">
+        <h2>⚠️ No Allure Results Found</h2>
+        <p>Tests may have failed before Allure could generate results.</p>
+        <p>Check the test-results directory for more information.</p>
+    </div>
+    <div class="info">
+        <h3>Next Steps:</h3>
+        <ul>
+            <li>Check test execution logs</li>
+            <li>Verify Playwright configuration</li>
+            <li>Ensure tests are running successfully</li>
+        </ul>
+    </div>
+</body>
+</html>`;
+
+    // Create allure-report directory
+    if (!fs.existsSync('allure-report')) {
+      fs.mkdirSync('allure-report', { recursive: true });
+    }
+
+    // Write basic report
+    fs.writeFileSync('allure-report/index.html', basicReport);
+    console.log('✅ Basic report generated');
+    process.exit(0);
   }
 
   console.log(`Found ${files.length} result files`);
