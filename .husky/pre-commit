@@ -1,1 +1,46 @@
-npx lint-staged
+#!/usr/bin/env sh
+set -e
+
+# Professional logging with optional colors
+if [ -t 1 ]; then
+  GREEN='\033[0;32m'
+  CYAN='\033[0;36m'
+  YELLOW='\033[1;33m'
+  BOLD='\033[1m'
+  RESET='\033[0m'
+else
+  GREEN=''
+  CYAN=''
+  YELLOW=''
+  BOLD=''
+  RESET=''
+fi
+
+log() {
+  printf "%s[%s] %s%s\n" "$CYAN" "husky pre-commit" "$1" "$RESET"
+}
+
+summary() {
+  printf "%s[%s] %s%s\n" "$GREEN" "husky pre-commit" "$1" "$RESET"
+}
+
+TS=$(date '+%Y-%m-%d %H:%M:%S')
+log "Starting lint-staged at $TS"
+
+# List staged files of interest
+STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACMRT)
+
+if [ -z "$STAGED_FILES" ]; then
+  log "No staged files detected. Skipping formatting."
+  exit 0
+fi
+
+COUNT=$(printf "%s" "$STAGED_FILES" | wc -l | tr -d ' ')
+log "Detected $COUNT staged file(s):"
+printf "%s\n" "$STAGED_FILES" | sed 's/^/  · /'
+
+# Run lint-staged with verbose output
+log "Running lint-staged (Prettier formatting)"
+npx lint-staged --verbose
+
+summary "Completed successfully at $(date '+%Y-%m-%d %H:%M:%S')"
