@@ -62,8 +62,8 @@ jobs:
             echo "🧪 Step 1: Clean Allure results..."
             node scripts/clean-allure-results.js
 
-            echo "🧪 Step 2: Run Playwright tests..."
-            npx playwright test --reporter=list || echo "⚠️ Playwright tests failed"
+            echo "🧪 Step 2: Run Playwright tests (using configured reporters)..."
+            npx playwright test || echo "⚠️ Playwright tests failed"
 
             echo "🧪 Step 3: Generate Allure report..."
             node scripts/generate-simple-report.js || echo "⚠️ Allure report generation failed"
@@ -99,12 +99,12 @@ jobs:
             git config --global user.name "CircleCI"
             git config --global user.email "circleci@example.com"
 
-            # Clone gh-pages branch
+            # Clone gh-pages branch (token-authenticated)
             echo "📥 Cloning gh-pages branch..."
             if [ -d "gh-pages" ]; then
               rm -rf gh-pages
             fi
-            git clone --branch gh-pages --single-branch https://github.com/RaffyRod/to-do-MVC-Playwright.git gh-pages
+            git clone --branch gh-pages --single-branch https://$GITHUB_TOKEN@github.com/RaffyRod/to-do-MVC-Playwright.git gh-pages
 
             # Copy report files
             echo "📋 Copying report files..."
@@ -124,8 +124,7 @@ jobs:
             git commit -m "Update test report - $(date)" || echo "No changes to commit"
 
             echo "🚀 Pushing to GitHub Pages..."
-            git remote set-url origin https://$GITHUB_TOKEN@github.com/RaffyRod/to-do-MVC-Playwright.git
-            git push origin gh-pages
+            git push https://$GITHUB_TOKEN@github.com/RaffyRod/to-do-MVC-Playwright.git gh-pages:gh-pages
 
             echo "✅ Successfully deployed to GitHub Pages!"
             echo "🌐 Report available at: https://raffyrod.github.io/to-do-MVC-Playwright/"
