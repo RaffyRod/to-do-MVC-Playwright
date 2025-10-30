@@ -42,17 +42,17 @@ Automated testing project for the TodoMVC application using Playwright with Type
 
 ## 🛠️ Technologies
 
-| Technology      | Version | Purpose                     |
-| --------------- | ------- | --------------------------- |
-| **Playwright**  | ^1.56.1 | Automation framework        |
-| **TypeScript**  | ^5.9.3  | Static typing and better DX |
-| **Node.js**     | ^18+    | JavaScript runtime          |
-| **Allure**      | ^3.4.2  | Report generation           |
-| **Prettier**    | ^3.6.2  | Code formatting             |
-| **Husky**       | ^9.1.7  | Git hooks                   |
-| **lint-staged** | ^16.2.6 | Pre-commit linting          |
-| **CircleCI**    | -       | CI/CD pipeline              |
-| **npm**         | ^9+     | Package manager             |
+| Technology      | Version                    | Purpose                     |
+| --------------- | -------------------------- | --------------------------- |
+| **Playwright**  | ^1.40.0                    | Automation framework        |
+| **TypeScript**  | ^5.9.3                     | Static typing and better DX |
+| **Node.js**     | ^18+                       | JavaScript runtime          |
+| **Allure**      | ^2.x (allure-playwright@2) | Report generation           |
+| **Prettier**    | ^3.6.2                     | Code formatting             |
+| **Husky**       | ^9.1.7                     | Git hooks                   |
+| **lint-staged** | ^16.2.6                    | Pre-commit linting          |
+| **CircleCI**    | -                          | CI/CD pipeline              |
+| **npm**         | ^9+                        | Package manager             |
 
 ## 🎯 Design Patterns
 
@@ -235,19 +235,21 @@ await allure.owner('QA Team');
 - **Easy navigation**: Clear and organized structure
 - **Exportable**: Static reports for sharing
 
-### Live Report Access
+### Report Access
 
-The test report is automatically deployed to GitHub Pages after each push to the main branch:
+Current CI setup publishes the report as CircleCI Artifacts (no GitHub Pages):
 
-**🌐 [View Live Report](https://raffyrod.github.io/to-do-MVC-Playwright/)**
+- 📦 CircleCI Artifacts (all runs): `https://app.circleci.com/pipelines/github/RaffyRod/to-do-MVC-Playwright`
+  - Open the latest workflow → job `test` → tab `Artifacts`
+  - Folders available:
+    - `allure-report/` → open `index.html`
+    - `test-results/` → raw Playwright outputs (videos, screenshots, traces)
 
-This live report includes:
+Local usage:
 
-- 📊 **Interactive pie chart** showing test execution percentages
-- 🎥 **Videos and screenshots** for failed tests
-- 🔍 **Browser-specific filtering** (Chromium, Firefox, WebKit)
-- 📈 **Detailed metrics** including duration and status
-- 🎨 **Modern responsive design** with professional UI
+```bash
+npm run allure:open   # generates and opens allure-report/index.html
+```
 
 ```bash
 # Generate Playwright's default HTML report
@@ -258,7 +260,7 @@ npm run test:html
 
 ### CircleCI
 
-The project uses CircleCI for reliable CI/CD pipeline that runs on every push to main branch:
+The project uses CircleCI for CI/CD on every push to main:
 
 #### Pipeline Steps:
 
@@ -266,28 +268,20 @@ The project uses CircleCI for reliable CI/CD pipeline that runs on every push to
 2. **Node.js Setup**: Install Node.js 18 with npm cache
 3. **Dependencies**: Install all project dependencies
 4. **Linting**: Run TypeScript type checking and Prettier formatting
-5. **Browser Installation**: Install Playwright browsers
-6. **Test Execution**: Run all tests across multiple browsers
-7. **Report Generation**: Generate Allure HTML report
-8. **Online Deployment**: Deploy report to GitHub Pages automatically
-9. **Artifact Storage**: Store reports as downloadable artifacts
+5. **Test Execution**: Run all tests across Chromium, Firefox, WebKit
+6. **Report Generation**: Generate Allure HTML report
+7. **Artifact Storage**: Store reports as downloadable artifacts (no GitHub Pages)
 
 #### Features:
 
 - ✅ **Multi-browser testing**: Chromium, Firefox, WebKit
 - ✅ **Automatic report generation**: HTML report with metrics
-- ✅ **Online deployment**: Report automatically available at public URL
 - ✅ **CircleCI Artifacts**: Downloadable reports from CircleCI dashboard
-- ✅ **Reliable deployment**: Uses GitHub Pages for hosting
 - ✅ **Simple configuration**: Easy to maintain and debug
 
 #### Report Access:
 
-The test report is automatically deployed online and available at:
-
-**🌐 [Live Test Report](https://raffyrod.github.io/to-do-MVC-Playwright/)**
-
-**📥 [CircleCI Artifacts](https://app.circleci.com/pipelines/github/RaffyRod/to-do-MVC-Playwright)** (for download)
+**📥 CircleCI Artifacts**: `https://app.circleci.com/pipelines/github/RaffyRod/to-do-MVC-Playwright`
 
 This report includes:
 
