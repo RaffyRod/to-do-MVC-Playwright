@@ -40,11 +40,33 @@ jobs:
             echo "✅ Browsers are pre-installed in Docker image"
 
       - run:
-          name: Run Playwright tests and generate report
+          name: Debug environment
+          command: |
+            echo "🔍 Debugging environment..."
+            echo "Current directory: $(pwd)"
+            echo "Node version: $(node --version)"
+            echo "NPM version: $(npm --version)"
+            echo "Playwright version: $(npx playwright --version)"
+            echo "Files in current directory:"
+            ls -la
+            echo "Files in tests directory:"
+            ls -la tests/ || echo "No tests directory"
+            echo "Playwright config:"
+            cat playwright.config.ts || echo "No playwright config"
+          when: always
+
+      - run:
+          name: Run Playwright tests step by step
           command: |
             export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-            echo "🧪 Running tests with detailed output..."
-            npm test || echo "⚠️ Tests completed with some failures, but continuing..."
+            echo "🧪 Step 1: Clean Allure results..."
+            node scripts/clean-allure-results.js
+
+            echo "🧪 Step 2: Run Playwright tests..."
+            npx playwright test --reporter=list || echo "⚠️ Playwright tests failed"
+
+            echo "🧪 Step 3: Generate Allure report..."
+            node scripts/generate-simple-report.js || echo "⚠️ Allure report generation failed"
           when: always
 
       - run:
