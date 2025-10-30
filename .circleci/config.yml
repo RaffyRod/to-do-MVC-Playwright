@@ -40,20 +40,11 @@ jobs:
             echo "✅ Browsers are pre-installed in Docker image"
 
       - run:
-          name: Clean old results
-          command: node scripts/clean-allure-results.js
-
-      - run:
-          name: Run Playwright tests
-          command: npx playwright test
-          when: on_success
-
-      - run:
-          name: Generate Allure report
+          name: Run Playwright tests and generate report
           command: |
             export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-            node scripts/generate-simple-report.js
-          when: always
+            npm test
+          when: on_success
 
       - run:
           name: Deploy to GitHub Pages
